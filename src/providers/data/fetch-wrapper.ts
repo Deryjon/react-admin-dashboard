@@ -1,5 +1,10 @@
 import { GraphQLFormattedError } from "graphql";
-import { STATUS_CODES } from "http";
+import { url } from "inspector";
+
+type Error = {
+    message: string;
+    statusCode: string;
+}
 const customFetch = async (url: string, options: RequestInit) => {
   const accessToken = localStorage.getItem("access_token");
 
@@ -32,8 +37,21 @@ if("errors" in body) {
     const code = errors?.[0]?.extensions?.code;
 
     return{
-        message: messages | JSON.stringify(errors),
+        message: messages || JSON.stringify(errors),
         statusCode: code || 500
     }
 }
+return null;
+}
+
+const fetchWrapper = async (url: string, options: RequestInit) => {
+  const response = await customFetch(url, options);
+const responseClone = response.clone()
+const body = await responseClone.json()
+const error = getGraphQLErrors(body)
+
+if(error){
+    throw error;
+}
+return response
 }
